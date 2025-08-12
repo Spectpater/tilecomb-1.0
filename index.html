@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tilemap Combiner</title>
+<style>
+    body {
+        font-family: sans-serif;
+        background: #222;
+        color: #fff;
+        text-align: center;
+        padding: 20px;
+    }
+    #dropzone {
+        border: 2px dashed #888;
+        padding: 40px;
+        margin: 20px auto;
+        width: 300px;
+        background: #333;
+    }
+    canvas {
+        margin-top: 20px;
+        background: transparent;
+        image-rendering: pixelated;
+    }
+</style>
+</head>
+<body>
+<h1>Tilemap Combiner</h1>
+<p>Drop your 16×16 PNG tiles here. They’ll be combined into one tilemap PNG.</p>
+
+<div id="dropzone">Drop PNG files here</div>
+<canvas id="canvas"></canvas><br>
+<button id="downloadBtn" style="display:none;">Download Tilemap</button>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const downloadBtn = document.getElementById('downloadBtn');
+
+dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropzone.style.borderColor = '#0f0';
+});
+dropzone.addEventListener('dragleave', e => {
+    e.preventDefault();
+    dropzone.style.borderColor = '#888';
+});
+dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.style.borderColor = '#888';
+    handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+    const imgs = [];
+    let loaded = 0;
+    for (let file of files) {
+        const img = new Image();
+        img.onload = () => {
+            imgs.push(img);
+            loaded++;
+            if (loaded === files.length) makeTilemap(imgs);
+        };
+        img.src = URL.createObjectURL(file);
+    }
+}
+
+function makeTilemap(imgs) {
+    const tileSize = 16;
+    const cols = Math.ceil(Math.sqrt(imgs.length));
+    const rows = Math.ceil(imgs.length / cols);
+    canvas.width = cols * tileSize;
+    canvas.height = rows * tileSize;
+
+    imgs.forEach((img, i) => {
+        let x = (i % cols) * tileSize;
+        let y = Math.floor(i / cols) * tileSize;
+        ctx.drawImage(img, x, y, tileSize, tileSize);
+    });
+
+    downloadBtn.style.display = 'inline-block';
+}
+
+downloadBtn.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'tilemap.png';
+    link.href = canvas.toDataURL();
+    link.click();
+});
+</script>
+</body>
+</html>
